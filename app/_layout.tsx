@@ -1,13 +1,26 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+
+import { syncProductsIfNeeded } from '@/utils/productSync';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack, router } from "expo-router";
+import { useEffect } from 'react';
+export default function Layout() {
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await AsyncStorage.getItem('token');
+
+      if(token){
+        await syncProductsIfNeeded(token)
+        router.replace('/ventas')
+      }else{
+        router.replace('/')
+      }
+    }
+    checkToken();
+  },[])
+
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -16,14 +29,45 @@ export default function RootLayout() {
     // Async font loading only occurs in development.
     return null;
   }
+  
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen
+        name="index"
+        options={{
+          title: "",
+          headerBackVisible: false, // Oculta botón de "atrás"
+        }}
+      />
+      <Stack.Screen
+        name="escaner"
+        options={{
+          title: "Escanear producto",
+        }}
+      />
+      <Stack.Screen
+        name="nuevoProducto"
+        options={{
+          title: "Nuevo producto",
+          headerBackVisible: true,
+        }}
+      />
+      <Stack.Screen
+        name="ventas"
+        options={{
+          title: "Ventas",
+          headerBackVisible: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="payTicket"
+        options={{
+          title: "Pago",
+          headerBackVisible: true,
+        }}
+      />
+    </Stack>
   );
 }
